@@ -1,119 +1,61 @@
-# Import required packages
+# Dependencies
 import csv
-import datetime
 
 # Files to load and output (Remember to change these)
-file_to_load = "raw_data/employee_data2.csv"
-file_to_output = "analysis/employee_data_reformatted2.csv"
+file_to_load = "raw_data/budget_data_1.csv"
+file_to_output = "analysis/budget_analysis_1.txt"
 
-# Dictionary of states with abbreviations
-us_state_abbrev = {
-    "Alabama": "AL",
-    "Alaska": "AK",
-    "Arizona": "AZ",
-    "Arkansas": "AR",
-    "California": "CA",
-    "Colorado": "CO",
-    "Connecticut": "CT",
-    "Delaware": "DE",
-    "Florida": "FL",
-    "Georgia": "GA",
-    "Hawaii": "HI",
-    "Idaho": "ID",
-    "Illinois": "IL",
-    "Indiana": "IN",
-    "Iowa": "IA",
-    "Kansas": "KS",
-    "Kentucky": "KY",
-    "Louisiana": "LA",
-    "Maine": "ME",
-    "Maryland": "MD",
-    "Massachusetts": "MA",
-    "Michigan": "MI",
-    "Minnesota": "MN",
-    "Mississippi": "MS",
-    "Missouri": "MO",
-    "Montana": "MT",
-    "Nebraska": "NE",
-    "Nevada": "NV",
-    "New Hampshire": "NH",
-    "New Jersey": "NJ",
-    "New Mexico": "NM",
-    "New York": "NY",
-    "North Carolina": "NC",
-    "North Dakota": "ND",
-    "Ohio": "OH",
-    "Oklahoma": "OK",
-    "Oregon": "OR",
-    "Pennsylvania": "PA",
-    "Rhode Island": "RI",
-    "South Carolina": "SC",
-    "South Dakota": "SD",
-    "Tennessee": "TN",
-    "Texas": "TX",
-    "Utah": "UT",
-    "Vermont": "VT",
-    "Virginia": "VA",
-    "Washington": "WA",
-    "West Virginia": "WV",
-    "Wisconsin": "WI",
-    "Wyoming": "WY",
-}
-
-# Placeholders for re-formatted contents
-emp_ids = []
-emp_first_names = []
-emp_last_names = []
-emp_dobs = []
-emp_ssns = []
-emp_states = []
+# Track various revenue parameters
+total_months = 0
+prev_revenue = 0
+month_of_change = []
+revenue_change_list = []
+greatest_increase = ["", 0]
+greatest_decrease = ["", 9999999999999999999]
+total_revenue = 0
 
 # Read the csv and convert it into a list of dictionaries
-with open(file_to_load) as emp_data:
-    reader = csv.DictReader(emp_data)
+with open(file_to_load) as revenue_data:
+    reader = csv.DictReader(revenue_data)
 
-    # Loop through each row, re-grab each field and store in a new list
     for row in reader:
 
-        # Grab emp_ids and store it into a list
-        emp_ids = emp_ids + [row["Emp ID"]]
+        # Track the total
+        total_months = total_months + 1
+        total_revenue = total_revenue + int(row["Revenue"])
 
-        # Grab names, split them, and store them in a temporary variable
-        split_name = row["Name"].split(" ")
+        # Track the revenue change
+        revenue_change = int(row["Revenue"]) - prev_revenue
+        prev_revenue = int(row["Revenue"])
+        revenue_change_list = revenue_change_list + [revenue_change]
+        month_of_change = month_of_change + [row["Date"]]
 
-        # Then save first and last name in separate lists
-        emp_first_names = emp_first_names + [split_name[0]]
-        emp_last_names = emp_last_names + [split_name[1]]
+        # Calculate the greatest increase
+        if (revenue_change > greatest_increase[1]):
+            greatest_increase[0] = row["Date"]
+            greatest_increase[1] = revenue_change
 
-        # Grab DOB and reformat it
-        reformatted_dob = datetime.datetime.strptime(row["DOB"], "%Y-%m-%d")
-        reformatted_dob = reformatted_dob.strftime("%m/%d/%Y")
+        # Calculate the greatest decrease
+        if (revenue_change < greatest_decrease[1]):
+            greatest_decrease[0] = row["Date"]
+            greatest_decrease[1] = revenue_change
 
-        # Then store it into a list
-        emp_dobs = emp_dobs + [reformatted_dob]
+# Calculate the Average Revenue Change
+revenue_avg = sum(revenue_change_list) / len(revenue_change_list)
 
-        # Grab SSN and reformat it
-        split_ssn = list(row["SSN"])
-        split_ssn[0:3] = ("*", "*", "*")
-        split_ssn[4:6] = ("*", "*")
-        joined_ssn = "".join(split_ssn)
+# Generate Output Summary
+output = (
+    f"\nFinancial Analysis\n"
+    f"----------------------------\n"
+    f"Total Months: {total_months}\n"
+    f"Total Revenue: ${total_revenue}\n"
+    f"Average Revenue Change: ${revenue_avg}\n"
+    f"Greatest Increase in Revenue: {greatest_increase[0]} (${greatest_increase[1]})\n"
+    f"Greatest Decrease in Revenue: {greatest_decrease[0]} (${greatest_decrease[1]})\n")
 
-        # Then store it into a list
-        emp_ssns = emp_ssns + [joined_ssn]
+# Print the output (to terminal)
+print(output)
 
-        # Grab the states and use the dictionary to find the replacement
-        state_abbrev = us_state_abbrev[row["State"]]
-
-        # Then store the abbreviation into a list
-        emp_states = emp_states + [state_abbrev]
-
-# Zip all of the new lists together
-empdb = zip(emp_ids, emp_first_names, emp_last_names,
-            emp_dobs, emp_ssns, emp_states)
-
-# Write all of the election data to csv
-with open(file_to_output, "w", newline="") as datafile:
-    writer = csv.writer(datafile)
-    writer.writerow(["Emp ID", "First Name", "Last Name",
-                     "DOB", "SSN", "State"])
-    writer.writerows(empdb)
+# Export the results to text file
+with open(file_to_output, "w") as txt_file:
+    txt_file.write(output)
