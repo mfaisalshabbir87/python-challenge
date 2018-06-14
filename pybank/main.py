@@ -1,56 +1,46 @@
-# import libraries
-import os
 import csv
-import sys
-
-# setting path
-csvpath = os.path.join("..", "resources", "budget_data_1.csv")
-
-
-# declaring variables
-total_months = 0
+import os
+# choose file 1 or 2
+file_num = 1
+# create file path and save as file
+file = os.path.join('raw_data', 'budget_data_'+ str(file_num) +'.csv')
+months = []
+revenue = []
+#read csv and parse data into lists
+with open(file, 'r') as csvfile:
+    csvread = csv.reader(csvfile)
+    
+    next(csvread, None)
+    for row in csvread:
+        months.append(row[0])
+        revenue.append(int(row[1]))
+#find total months
+total_months = len(months)
+#create largest increase, decrease variables and set them equal to the first revenue record
+largest_inc = revenue[0]
+largest_dec = revenue[0]
 total_revenue = 0
-greatest_inc = -sys.maxsize - 1
-greatest_inc_date = ""
-greatest_dec = sys.maxsize
-greatest_dec_date = ""
-
-# reading the file in
-with open(csvpath, newline = '') as csvfile:
-    csvreader = csv.reader(csvfile, delimiter = ',')
-    next(csvreader, None)
-
-    # counting months; finding total revenue; find greatest inc & dec in revenue
-    for row in csvreader:
-        total_months += 1
-        total_revenue += int(row[1])
-        if int(row[1]) >= greatest_inc:
-            greatest_inc = int(row[1])
-            greatest_inc_date = row[0]
-        if int(row[1]) <= greatest_dec:
-            greatest_dec = int(row[1])
-            greatest_dec_date = row[0]
-
-# calculating average revenue change
+#loop through revenue indices 
+for r in range(len(revenue)):
+    if revenue[r] >= largest_inc:
+        largest_inc = revenue[r]
+        great_inc_month = months[r]
+    elif revenue[r] <= largest_dec:
+        largest_dec = revenue[r]
+        great_dec_month = months[r]
+    total_revenue += revenue[r]
+#calculate average_change
 average_change = round(total_revenue/total_months, 2)
-
-# printing results to terminal
-print("Financial Analysis")
-print("--------------------------------------------")
-print("Total Months: " + str(total_months))
-print("Total Revenue: $" + str(total_revenue))
-print("Average Revenue Change: $" + str(average_change))
-print("Greatest Increase in Revenue: " + greatest_inc_date + " ($" + str(greatest_inc) + ")")
-print("Greatest Decrease in Revenue: " + greatest_dec_date + " ($" + str(greatest_dec) + ")")
-
-# creating the new txt file
-new_file = open("Output/analysis_1.txt", "w")
-
-# writing the text file
-new_file.write("Financial Analysis \n")
-new_file.write("-------------------------------------------- \n")
-new_file.write("Total Months: " + str(total_months) + "\n")
-new_file.write("Total Revenue: $" + str(total_revenue) + "\n")
-new_file.write("Average Revenue Change: $" + str(average_change) + "\n")
-new_file.write("Greatest Increase in Revenue: " + greatest_inc_date + " ($" + str(greatest_inc) + ")" + "\n")
-new_file.write("Greatest Decrease in Revenue: " + greatest_dec_date + " ($" + str(greatest_dec) + ")" + "\n")
+output_path = os.path.join('Output','pybank_output_' + str(file_num) + '.txt')
+# print the summary
+with open(output_path, 'w') as writefile:
+    writefile.writelines('Financial Analysis\n')
+    writefile.writelines('---------' + '\n')
+    writefile.writelines('Total Revenue: $' + str(total_revenue) + '\n')
+    writefile.writelines('Total Months: ' + str(total_months) + '\n')    
+    writefile.writelines('Average Revenue Change: $' + str(average_change) + '\n')
+    writefile.writelines('largest Increase in Revenue: ' + great_inc_month + ' ($' + str(largest_inc) + ')'+ '\n')
+    writefile.writelines('largest Decrease in Revenue: ' + great_dec_month + ' ($' + str(largest_dec) + ')')
+#prints to terminal
+with open(output_path, 'r') as readfile:
+    print(readfile.read())
