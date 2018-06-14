@@ -1,61 +1,80 @@
-# Dependencies
+# import libraries
+import os
 import csv
 
-# Files to load and output (Remember to change these)
-file_to_load = "raw_data/budget_data_1.csv"
-file_to_output = "analysis/budget_analysis_1.txt"
+# setting the path
+csvpath = os.path.join('Resources', 'employee_data1.csv')
 
-# Track various revenue parameters
-total_months = 0
-prev_revenue = 0
-month_of_change = []
-revenue_change_list = []
-greatest_increase = ["", 0]
-greatest_decrease = ["", 9999999999999999999]
-total_revenue = 0
+# declaring variables
+emp_id = []
+first_name = []
+last_name = []
+dob = []
+ssn = []
+state = []
 
-# Read the csv and convert it into a list of dictionaries
-with open(file_to_load) as revenue_data:
-    reader = csv.DictReader(revenue_data)
+# creating a dictionary of states and abbreviations
+us_state_abbrev = {
+    'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR', 'California': 'CA', 'Colorado': 'CO',
+    'Connecticut': 'CT', 'Delaware': 'DE', 'Florida': 'FL', 'Georgia': 'GA', 'Hawaii': 'HI', 'Idaho': 'ID',
+    'Illinois': 'IL', 'Indiana': 'IN', 'Iowa': 'IA', 'Kansas': 'KS', 'Kentucky': 'KY', 'Louisiana': 'LA',
+    'Maine': 'ME', 'Maryland': 'MD', 'Massachusetts': 'MA', 'Michigan': 'MI', 'Minnesota': 'MN',
+    'Mississippi': 'MS', 'Missouri': 'MO', 'Montana': 'MT', 'Nebraska': 'NE', 'Nevada': 'NV',
+    'New Hampshire': 'NH', 'New Jersey': 'NJ', 'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC',
+    'North Dakota': 'ND', 'Ohio': 'OH', 'Oklahoma': 'OK', 'Oregon': 'OR', 'Pennsylvania': 'PA',
+    'Rhode Island': 'RI', 'South Carolina': 'SC', 'South Dakota': 'SD', 'Tennessee': 'TN', 'Texas': 'TX',
+    'Utah': 'UT', 'Vermont': 'VT', 'Virginia': 'VA', 'Washington': 'WA', 'West Virginia': 'WV',
+    'Wisconsin': 'WI', 'Wyoming': 'WY',
+}
 
-    for row in reader:
+# reading the file in
+with open(csvpath, newline = '') as csvfile:
+    csvreader = csv.reader(csvfile, delimiter = ',')
+    next(csvreader, None)
 
-        # Track the total
-        total_months = total_months + 1
-        total_revenue = total_revenue + int(row["Revenue"])
+    # looping through the read file
+    for row in csvreader:
+        # appending employee id to a new list
+        emp_id.append(row[0])
 
-        # Track the revenue change
-        revenue_change = int(row["Revenue"]) - prev_revenue
-        prev_revenue = int(row["Revenue"])
-        revenue_change_list = revenue_change_list + [revenue_change]
-        month_of_change = month_of_change + [row["Date"]]
+        # appending first & last name to two separate lists
+        name = row[1].split(" ") # splitting name by space
+        first_name.append(name[0]) # appending first name
+        last_name.append(name[1]) # appending last name
 
-        # Calculate the greatest increase
-        if (revenue_change > greatest_increase[1]):
-            greatest_increase[0] = row["Date"]
-            greatest_increase[1] = revenue_change
+        # formatting & appending dob
+        bdate = row[2].split("-") # splitting dob by '-'
+        new_db = bdate[1] + "/" + bdate[2] + "/" + bdate[0] # formatting dob
+        dob.append(new_db) # appending formatted dob
 
-        # Calculate the greatest decrease
-        if (revenue_change < greatest_decrease[1]):
-            greatest_decrease[0] = row["Date"]
-            greatest_decrease[1] = revenue_change
+        #formatting & appending ssn
+        ssn_split = row[3].split("-") # splitting ssn by '-'
+        new_ssn = "***-**-" +ssn_split[2] # formatting ssn
+        ssn.append(new_ssn) # appending formatted ssn
 
-# Calculate the Average Revenue Change
-revenue_avg = sum(revenue_change_list) / len(revenue_change_list)
+        # looping through states dictionary
+        state.append(us_state_abbrev[row[4]])
 
-# Generate Output Summary
-output = (
-    f"\nFinancial Analysis\n"
-    f"----------------------------\n"
-    f"Total Months: {total_months}\n"
-    f"Total Revenue: ${total_revenue}\n"
-    f"Average Revenue Change: ${revenue_avg}\n"
-    f"Greatest Increase in Revenue: {greatest_increase[0]} (${greatest_increase[1]})\n"
-    f"Greatest Decrease in Revenue: {greatest_decrease[0]} (${greatest_decrease[1]})\n")
+# tests
+# print(first_name[0])
+# print(last_name[0])
+# print(dob[0])
+# print(ssn[0])
+# print(state[0])
 
-# Print the output (to terminal)
-print(output)
+# zipping data
+employees = zip(emp_id, first_name, last_name, dob, ssn, state)
 
-# Export the results to text file
-with open(file_to_output, "w") as txt_file:
-    txt_file.write(output)
+# creting the new csv file
+output_file = os.path.join('Output/employee_data_clean_1.csv')
+
+# opening & writing the file
+with open(output_file, 'w', newline = '') as csvfile:
+    writer = csv.writer(csvfile, delimiter = ',')
+
+    # writing in headers
+    writer.writerow(["Emp ID", "First Name", "Last Name", "DOB", "SSN", "State"])
+
+    # writing data
+    for employee in employees:
+        writer.writerow(employee)
