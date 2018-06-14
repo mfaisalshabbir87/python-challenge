@@ -1,89 +1,75 @@
-# Incorporated the csv module
+import os
 import csv
 
-# Files to load and output (Remember to change these)
-file_to_load = "raw_data/election_data_2.csv"
-file_to_output = "analysis/election_analysis_2.txt"
+#choose file
+file_num = 1
 
-# Total Vote Counter
+# Identifies file with poll data
+file = os.path.join('raw_data', 'election_data_' + str(file_num) + '.csv')
+
+#candidate name and vote count dictionary.
+poll = {}
+
+#set total votes to zero.
 total_votes = 0
 
-# Candidate Options and Vote Counters
-candidate_options = []
-candidate_votes = {}
+#read data file
+with open(file, 'r') as csvfile:
+    csvread = csv.reader(csvfile)
 
-# Winning Candidate and Winning Count Tracker
-winning_candidate = ""
-winning_count = 0
+    next(csvread, None)
 
-# Read the csv and convert it into a list of dictionaries
-with open(file_to_load) as election_data:
-    reader = csv.DictReader(election_data)
+    #creates dictionary from file using column 3 as keys, using each name only once.
 
-    # For each row...
-    for row in reader:
+    for row in csvread:
+        total_votes += 1
+        if row[2] in poll.keys():
+            poll[row[2]] = poll[row[2]] + 1
+        else:
+            poll[row[2]] = 1
 
-        # Run the loader animation
-        print(". ", end=""),
+#create empty list for candidates and  vote count
+candidates = []
+num_votes = []
 
-        # Add to the total vote count
-        total_votes = total_votes + 1
+#takes dictionary keys and values and store in lists
 
-        # Extract the candidate name from each row
-        candidate_name = row["Candidate"]
+for key, value in poll.items():
+    candidates.append(key)
+    num_votes.append(value)
 
-        # If the candidate does not match any existing candidate...
-        # (In a way, our loop is "discovering" candidates as it goes)
-        if candidate_name not in candidate_options:
 
-            # Add it to the list of candidates in the running
-            candidate_options.append(candidate_name)
+vote_percent = []
+for n in num_votes:
+    vote_percent.append(round(n/total_votes*100, 1))
 
-            # And begin tracking that candidate's voter count
-            candidate_votes[candidate_name] = 0
+# combine candidates, num_votes, vote_percent into tuples
+clean_data = list(zip(candidates, num_votes, vote_percent))
 
-        # Then add a vote to that candidate's count
-        candidate_votes[candidate_name] = candidate_votes[candidate_name] + 1
+#create winner_list
+winner_list = []
 
-# Print the results and export the data to our text file
-with open(file_to_output, "w") as txt_file:
+for name in clean_data:
+    if max(num_votes) == name[1]:
+        winner_list.append(name[0])
 
-    # Print the final vote count (to terminal)
-    election_results = (
-        f"\n\nElection Results\n"
-        f"-------------------------\n"
-        f"Total Votes: {total_votes}\n"
-        f"-------------------------\n")
-    print(election_results, end="")
 
-    # Save the final vote count to the text file
-    txt_file.write(election_results)
+winner = winner_list[0]
 
-    # Determine the winner by looping through the counts
-    for candidate in candidate_votes:
+if len(winner_list) > 1:
+    for w in range(1, len(winner_list)):
+        winner = winner + ", " + winner_list[w]
 
-        # Retrieve vote count and percentage
-        votes = candidate_votes.get(candidate)
-        vote_percentage = float(votes) / float(total_votes) * 100
+#prints to file
+output_path = os.path.join('Output', 'election_results_' + str(file_num) +'.txt')
 
-        # Determine winning vote count and candidate
-        if (votes > winning_count):
-            winning_count = votes
-            winning_candidate = candidate
+with open(output_path, 'w') as txtfile:
+    txtfile.writelines('Election Results \n------- \nTotal Votes: ' + str(total_votes) +
+      '\n-------\n')
+    for entry in clean_data:
+        txtfile.writelines(entry[0] + ": " + str(entry[2]) +'%  (' + str(entry[1]) + ')\n')
+    txtfile.writelines('------- \nWinner: ' + winner + '\n-------')
 
-        # Print each candidate's voter count and percentage (to terminal)
-        voter_output = f"{candidate}: {vote_percentage:.3f}% ({votes})\n"
-        print(voter_output, end="")
-
-        # Save each candidate's voter count and percentage to text file
-        txt_file.write(voter_output)
-
-    # Print the winning candidate (to terminal)
-    winning_candidate_summary = (
-        f"-------------------------\n"
-        f"Winner: {winning_candidate}\n"
-        f"-------------------------\n")
-    print(winning_candidate_summary)
-
-    # Save the winning candidate's name to the text file
-    txt_file.write(winning_candidate_summary)
+#prints file to terminal
+with open(output_path, 'r') as readfile:
+    print(readfile.read())
